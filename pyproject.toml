@@ -1,0 +1,92 @@
+[build-system]
+requires = ["setuptools>=70", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tree-view-sandbox"
+dynamic = ["version"]
+description = "Sandbox repo for lineage tree view in VisPy"
+readme = "README.md"
+license = { text = "BSD 3-Clause License" }
+requires-python = ">=3.10"
+authors = [
+    { name = "Caroline Malin-Mayor", email = "malinmayorc@janelia.hhmi.org" },
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Topic :: Scientific/Engineering :: Image Processing",
+]
+
+dependencies =[
+    "funtracks",
+    "PyQt5>=5.13.2,!=5.15.0",
+    "numpy",
+    "vispy",
+    "qtpy",
+    "pandas",
+]
+
+[project.optional-dependencies]
+testing =["pyqt5", "pytest", "pytest-cov", "pytest-qt"]
+dev = ["ruff", "pre-commit"]
+all = ["tree-view-sandbox[testing,dev]"]
+
+[tool.setuptools_scm]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+fix = true
+src = ["src"]
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "W", #flake8
+    "UP", # pyupgrade
+    "I", # isort
+    "BLE", # flake8-blind-exception
+    "B", # flake8-bugbear
+    "A", # flake8-builtins
+    "C4", # flake8-comprehensions
+    "PIE", # flake8-pie
+    "SIM", # flake8-simplify
+    "D", # docstrings
+]
+ignore = [
+    "D415", # first line of docstrings end in punctuation
+    "D401", # first line of dosctrings imperative mood
+    "D100", # missing docstring in public module
+    "D205", # blank line between first line of docstring and rest
+    "S101", # Use of assert detected
+]
+
+unfixable = [
+  "B905", # currently adds strict=False to zips. Should add strict=True (manually)
+]
+
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/*.py" = ["F", "D"]
+"src/tree_view/tracks.py" = ["D"]
+"tests/*" = ["D"]
+
+# https://docs.astral.sh/ruff/formatter/
+[tool.ruff.format]
+
+[tool.mypy]
+ignore_missing_imports = true
+
+[tool.pixi.project]
+channels = ["conda-forge"]
+platforms = ["osx-arm64"]
+
+[tool.pixi.pypi-dependencies]
+tree-view-sandbox = { path = ".", editable = true }
+
+[tool.pixi.environments]
+default = { solve-group = "default" }
+all = { features = ["all"], solve-group = "default" }
+dev = { features = ["dev"], solve-group = "default" }
+testing = { features = ["testing"], solve-group = "default" }
+
+[tool.pixi.tasks]
