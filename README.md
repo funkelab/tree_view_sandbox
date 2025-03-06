@@ -4,6 +4,7 @@
 - [motile_tracker](https://github.com/funkelab/motile_tracker) - the current working implementation of the whole motile tracker application
     - [proof of concept vispy implementation](https://github.com/funkelab/motile_tracker/blob/63895ffcdfdc2fa4bf6336510f96370531e50b87/src/motile_plugin/data_views/views/tree_view/tree_plot.py) - This is months old and perhaps not that useful, but included here for completeness
 - [finn](https://github.com/funkelab/motile_tracker) - the napari fork turned into our viewing code repo, where this tree view will go when it is complete
+    - [all tree view code](https://github.com/funkelab/motile_tracker/tree/main/src/motile_tracker/data_views/views/tree_view)
     - [layout code](https://github.com/funkelab/finn/blob/main/finn/track_data_views/views/tree_view/tree_widget_utils.py) - the current code that computes the tree view layout (using pandas)
 - [spatial_graph](https://github.com/funkelab/motile_tracker) - the reason we are wrapping away the networkx API into a vectorized access pattern. Will replace networkx for in memory graph data structure, and will allow clicking on edges
 
