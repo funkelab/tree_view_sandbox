@@ -24,6 +24,7 @@ dependencies =[
     "vispy",
     "qtpy",
     "pandas",
+    "superqt",
 ]
 
 [project.optional-dependencies]
@@ -50,13 +51,13 @@ select = [
     "C4", # flake8-comprehensions
     "PIE", # flake8-pie
     "SIM", # flake8-simplify
-    "D", # docstrings
+    "D101", # docstrings on public class
+    "D102", # docstrings on public methods
+    "D103", # docstrings on public functions
+    "D417", # docstring should document all params
+    "D414", # docstring should have all sections
 ]
 ignore = [
-    "D415", # first line of docstrings end in punctuation
-    "D401", # first line of dosctrings imperative mood
-    "D100", # missing docstring in public module
-    "D205", # blank line between first line of docstring and rest
     "S101", # Use of assert detected
 ]
 
