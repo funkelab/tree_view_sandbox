@@ -91,3 +91,6 @@ dev = { features = ["dev"], solve-group = "default" }
 testing = { features = ["testing"], solve-group = "default" }
 
 [tool.pixi.tasks]
+
+[tool.pixi.dependencies]
+pygfx = ">=0.9.0,<0.10"
