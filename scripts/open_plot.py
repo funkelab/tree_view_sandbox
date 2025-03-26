@@ -11,12 +11,24 @@ from qtpy.QtWidgets import (
 from tree_view.tree_widget import TreeWidget
 
 
+import pandas as pd
+
+from tree_view.tracks_from_df import tracks_from_df
+
+
 class MainWindow(QMainWindow):
     def __init__(self, cluster=False):
         super().__init__()
-        self.tree_widget = TreeWidget()
+
+        csv_path = "scripts/hela_example_tracks.csv"
+        df = pd.read_csv(csv_path)
+        df["time"] = df["t"]
+
+        tracks = tracks_from_df(df, features={"track_id": "track_id", "area": "area"})
+
+        self.tree_widget = TreeWidget(tracks)
         self.setCentralWidget(self.tree_widget)
-        self.setWindowState(Qt.WindowMaximized)
+        #self.setWindowState(Qt.WindowMaximized)
 
 
 if __name__ == "__main__":

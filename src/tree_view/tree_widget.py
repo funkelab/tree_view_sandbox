@@ -16,6 +16,8 @@ from .qt_widgets.tree_view_mode_widget import TreeViewModeWidget
 from .tracks import Tracks
 from .tree_plot import TreePlot
 
+import numpy as np
+from funtracks.data_model import NodeAttr
 
 class TreeWidget(QWidget):
     """pyqtgraph-based widget for lineage tree visualization and navigation"""
@@ -29,10 +31,34 @@ class TreeWidget(QWidget):
 
         self.selected_nodes = NodeSelectionList()
 
+        def recurse_tree(node):
+            positions = tracks.get_nodes_attr([node], NodeAttr.POS.value, required=True)
+            _times = [["square", node, positions[:, 0][0]]]
+            succs = tracks.successors(node)
+            while len(succs)==1:
+                node = succs[0]
+                positions = tracks.get_nodes_attr([node], NodeAttr.POS.value, required=True)
+                _times.append(["circle", node, positions[:, 0][0]])
+                succs = tracks.successors(node)
+            if len(succs)==0:
+                _times[-1][0] = "cross"
+                times.append(_times)
+            if len(succs)>1:
+                recurse_tree(succs[0])
+                _times[-1][0] = "triangle_up"
+                times.append(_times)
+                recurse_tree(succs[1])
+
+        times = []
+        nodes = tracks.nodes()
+        in_degrees = tracks.in_degree(nodes)
+        for iprogenitor in np.nonzero(in_degrees==0)[0]:
+            recurse_tree(nodes[iprogenitor].item())
+
         # Construct the tree view pyqtgraph widget
         layout = QVBoxLayout()
 
-        self.tree_plot: TreePlot = TreePlot()
+        self.tree_plot: TreePlot = TreePlot(times)
         # Add radiobuttons for switching between different display modes
         self.mode_widget = TreeViewModeWidget()
         self.mode_widget.change_mode.connect(self._set_mode)
