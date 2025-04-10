@@ -31,7 +31,8 @@ class TreeWidget(QWidget):
 
         self.selected_nodes = NodeSelectionList()
 
-        def recurse_tree(node):
+        # lineages is a list of lists (trees) of lists (tracks)
+        def recurse_tree(node, lineage):
             positions = tracks.get_nodes_attr([node], NodeAttr.POS.value, required=True)
             _lineage = [["square", node, positions[:, 0][0]]]
             succs = tracks.successors(node)
@@ -42,18 +43,19 @@ class TreeWidget(QWidget):
                 succs = tracks.successors(node)
             if len(succs)==0:
                 _lineage[-1][0] = "cross"
-                lineages.append(_lineage)
+                lineage.append(_lineage)
+                return lineage
             if len(succs)>1:
-                recurse_tree(succs[0])
+                lineage = recurse_tree(succs[0], lineage)
                 _lineage[-1][0] = "triangle_up"
-                lineages.append(_lineage)
-                recurse_tree(succs[1])
+                lineage.append(_lineage)
+                return recurse_tree(succs[1], lineage)
 
         lineages = []
         nodes = tracks.nodes()
         in_degrees = tracks.in_degree(nodes)
         for iprogenitor in np.nonzero(in_degrees==0)[0]:
-            recurse_tree(nodes[iprogenitor].item())
+            lineages.append(recurse_tree(nodes[iprogenitor].item(), []))
 
         # Construct the tree view pyqtgraph widget
         layout = QVBoxLayout()
@@ -106,6 +108,8 @@ class TreeWidget(QWidget):
         self.setLayout(layout)
         self.refresh(self.tracks)
 
+        self.tree_plot.update("all")
+
     def toggle_display_mode(self):
         """Toggle display mode."""
         self.mode_widget._toggle_display_mode()
@@ -137,6 +141,7 @@ class TreeWidget(QWidget):
             mode (str): The mode to set the view to. Options are "all" or "lineage"
 
         """
+        self.tree_plot.update(mode)
 
     def _set_feature(self, feature: str) -> None:
         """Set the feature mode to 'tree' or 'area'. For this the view is always
