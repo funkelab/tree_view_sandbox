@@ -36,6 +36,8 @@ class TreePlot(QWidget):
                 (event.pick_info["world_object"].name, event.pick_info["vertex_index"]))
         self.selected_geometry.positions.data[:,:] = 0
         for i,(nd,y) in enumerate(self.selected_nodes):
+            self.selected_geometry.colors.data[i] = [0.68,0.85,0.90,1]  # light blue
+            self.selected_geometry.colors.update_range(i)
             self.selected_geometry.positions.data[i,0] = nd.x*10
             self.selected_geometry.positions.data[i,1] = nd.time-y
             self.selected_geometry.positions.update_range(i)
@@ -45,12 +47,16 @@ class TreePlot(QWidget):
         self.scene.clear()
 
         # selected markers
-        self.selected_geometry = gfx.Geometry(positions=[(0,0,0) for _ in range(100)])
+        self.selected_geometry = gfx.Geometry(positions=[(0,0,0) for _ in range(100)],
+                                              colors=[[0,0,0,0] for _ in range(100)],
+                                              )
         points = gfx.Points(
             self.selected_geometry,
             gfx.PointsMarkerMaterial(marker="circle",
-                                     edge_color="lightblue",
-                                     edge_width=6),
+                                     color_mode="vertex",
+                                     size=15,
+                                     size_space="screen",
+                                     ),
             render_order=3,
         )
         self.scene.add(points)
