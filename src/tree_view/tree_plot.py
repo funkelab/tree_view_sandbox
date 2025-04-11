@@ -17,8 +17,10 @@ class TreePlot(QWidget):
         self.colors = distinctipy.get_colors(sum([len(x) for x in self.lineages]))
         self.selected_nodes = []
         self.selected_geometry = None
+        self.mode = "all"
+        self.feature = "tree"
 
-        self.NameData = namedtuple('NameData', 'x, node, time')
+        self.NameData = namedtuple('NameData', 'x, node, time, area')
 
         self.canvas = WgpuCanvas()
         self.renderer = gfx.WgpuRenderer(self.canvas)
@@ -35,15 +37,21 @@ class TreePlot(QWidget):
         self.selected_nodes.append(
                 (event.pick_info["world_object"].name, event.pick_info["vertex_index"]))
         self.selected_geometry.positions.data[:,:] = 0
-        for i,(nd,y) in enumerate(self.selected_nodes):
+        for i,(nd,vi) in enumerate(self.selected_nodes):
             self.selected_geometry.colors.data[i] = [0.68,0.85,0.90,1]  # light blue
             self.selected_geometry.colors.update_range(i)
-            self.selected_geometry.positions.data[i,0] = nd.x*10
-            self.selected_geometry.positions.data[i,1] = nd.time-y
+            self.selected_geometry.positions.data[i,0] = nd.x*10 if self.feature == "tree" else nd.area[vi]
+            self.selected_geometry.positions.data[i,1] = nd.time[vi]
             self.selected_geometry.positions.update_range(i)
         self.canvas.request_draw()
 
-    def update(self, mode):
+    def set_mode(self, mode):
+        self.mode = mode
+
+    def set_feature(self, feature):
+        self.feature = feature
+
+    def update(self):
         self.scene.clear()
 
         # selected markers
@@ -64,7 +72,7 @@ class TreePlot(QWidget):
         x = 0
         for itree in range(len(self.lineages)):
             # skip if not selected
-            if mode=="lineage":
+            if self.mode=="lineage":
                 skip=True
                 for itrack in range(len(self.lineages[itree])):
                     for selected in self.selected_nodes:
@@ -79,12 +87,14 @@ class TreePlot(QWidget):
 
                 # start markers
                 points = gfx.Points(
-                    gfx.Geometry(positions=[(x*10, -track[i].time, 0) for i in (0,)]),
+                    gfx.Geometry(positions=[(x*10 if self.feature == "tree" else track[i].area,
+                                             -track[i].time,
+                                             0) for i in (0,)]),
                     gfx.PointsMarkerMaterial(marker=track[0].marker,
                                              edge_color=self.colors[x],
                                              edge_width=4,
                                              pick_write=True),
-                    name=self.NameData(x, track[0].node, -track[0].time),
+                    name=self.NameData(x, track[0].node, [-track[0].time], [track[0].area]),
                     render_order=2,
                 )
                 self.scene.add(points)
@@ -95,12 +105,14 @@ class TreePlot(QWidget):
                 # middle markers
                 if len(track)>2:
                     points = gfx.Points(
-                        gfx.Geometry(positions=[(x*10, -i.time, 0) for i in track[1:-1]]),
+                        gfx.Geometry(positions=[(x*10 if self.feature == "tree" else t.area,
+                                                 -t.time,
+                                                 0) for t in track[1:-1]]),
                         gfx.PointsMarkerMaterial(marker=track[1].marker,
                                                  edge_color=self.colors[x],
                                                  edge_width=4,
                                                  pick_write=True),
-                        name=self.NameData(x, track[0].node, -track[1].time),
+                        name=self.NameData(x, track[0].node, [-t.time for t in track[1:-1]], [t.area for t in track[1:-1]]),
                     )
                     self.scene.add(points)
 
@@ -109,12 +121,14 @@ class TreePlot(QWidget):
 
                 # end markers
                 points = gfx.Points(
-                    gfx.Geometry(positions=[(x*10, -track[i].time, 0) for i in (-1,)]),
+                    gfx.Geometry(positions=[(x*10 if self.feature == "tree" else track[i].area,
+                                             -track[i].time,
+                                             0) for i in (-1,)]),
                     gfx.PointsMarkerMaterial(marker=track[-1].marker,
                                              edge_color=self.colors[x],
                                              edge_width=4,
                                              pick_write=True),
-                    name=self.NameData(x, track[0].node, -track[-1].time),
+                    name=self.NameData(x, track[0].node, [-track[-1].time], [track[-1].area]),
                 )
                 self.scene.add(points)
 
@@ -122,9 +136,10 @@ class TreePlot(QWidget):
                 def select_nodes(event):  self._select_nodes(event)
 
                 # vertical track lines
-                positions = [[x*10, -track[i].time, 0.0] for i in (0,-1)]
                 line = gfx.Line(
-                    gfx.Geometry(positions=np.array(positions).astype(np.float32)),
+                    gfx.Geometry(positions=[[x*10 if self.feature == "tree" else t.area,
+                                             -t.time,
+                                             0.0] for t in track]),
                     gfx.LineMaterial(thickness=4.0, color=self.colors[x]),
                     render_order=4,
                 )
@@ -138,11 +153,17 @@ class TreePlot(QWidget):
                     inext = itrack+1
                     while self.lineages[itree][inext][0].time-1 != track[-1].time:
                         inext += 1
-                    positions = [[(x-(itrack-iprev))*10, -self.lineages[itree][iprev][0].time, 0.0],
-                                 [x*10, -track[-1].time, 0.0],
-                                 [(x-(itrack-inext))*10, -self.lineages[itree][inext][0].time, 0.0]]
+                    positions = [[(x-(itrack-iprev))*10 if self.feature == "tree" else self.lineages[itree][iprev][0].area,
+                                   -self.lineages[itree][iprev][0].time,
+                                   0.0],
+                                 [x*10 if self.feature == "tree" else track[-1].area,
+                                  -track[-1].time,
+                                  0.0],
+                                 [(x-(itrack-inext))*10 if self.feature == "tree" else self.lineages[itree][inext][0].area,
+                                  -self.lineages[itree][inext][0].time,
+                                  0.0]]
                     line = gfx.Line(
-                        gfx.Geometry(positions=np.array(positions).astype(np.float32)),
+                        gfx.Geometry(positions=positions),
                         gfx.LineMaterial(thickness=2.0, color="white"),
                     )
                     self.scene.add(line)

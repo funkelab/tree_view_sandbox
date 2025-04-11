@@ -31,17 +31,19 @@ class TreeWidget(QWidget):
         self.view_direction = "vertical"  # options: "horizontal", "vertical"
 
         self.selected_nodes = NodeSelectionList()
-        self.VertexData = namedtuple('VertexData', 'marker, node, time')
+        self.VertexData = namedtuple('VertexData', 'marker, node, time, area')
 
         # lineages is a list of lists (trees) of lists (tracks)
         def recurse_tree(node, lineage):
-            positions = tracks.get_nodes_attr([node], NodeAttr.POS.value, required=True)
-            _lineage = [self.VertexData("square", node, positions[:,0][0])]
+            position = tracks.get_node_attr(node, NodeAttr.POS.value, required=True)
+            area = tracks.get_node_attr(node, NodeAttr.AREA.value, required=True)
+            _lineage = [self.VertexData("square", node, position[0], area)]
             succs = tracks.successors(node)
             while len(succs)==1:
                 node = succs[0]
-                positions = tracks.get_nodes_attr([node], NodeAttr.POS.value, required=True)
-                _lineage.append(self.VertexData("circle", node, positions[:,0][0]))
+                position = tracks.get_node_attr(node, NodeAttr.POS.value, required=True)
+                area = tracks.get_node_attr(node, NodeAttr.AREA.value, required=True)
+                _lineage.append(self.VertexData("circle", node, position[0], area))
                 succs = tracks.successors(node)
             if len(succs)==0:
                 _lineage[-1] = self.VertexData("cross", *_lineage[-1][1:])
@@ -63,6 +65,7 @@ class TreeWidget(QWidget):
         layout = QVBoxLayout()
 
         self.tree_plot: TreePlot = TreePlot(lineages)
+
         # Add radiobuttons for switching between different display modes
         self.mode_widget = TreeViewModeWidget()
         self.mode_widget.change_mode.connect(self._set_mode)
@@ -110,7 +113,7 @@ class TreeWidget(QWidget):
         self.setLayout(layout)
         self.refresh(self.tracks)
 
-        self.tree_plot.update("all")
+        self.tree_plot.update()
 
     def toggle_display_mode(self):
         """Toggle display mode."""
@@ -143,7 +146,8 @@ class TreeWidget(QWidget):
             mode (str): The mode to set the view to. Options are "all" or "lineage"
 
         """
-        self.tree_plot.update(mode)
+        self.tree_plot.set_mode(mode)
+        self.tree_plot.update()
 
     def _set_feature(self, feature: str) -> None:
         """Set the feature mode to 'tree' or 'area'. For this the view is always
@@ -155,6 +159,8 @@ class TreeWidget(QWidget):
         """
         if feature not in ["tree", "area"]:
             raise ValueError(f"Feature must be 'tree' or 'area', got {feature}")
+        self.tree_plot.set_feature(feature)
+        self.tree_plot.update()
 
     def _update_lineage_df(self) -> None:
         """Subset dataframe to include only nodes belonging to the current lineage"""
