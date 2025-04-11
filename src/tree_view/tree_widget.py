@@ -18,6 +18,7 @@ from .tree_plot import TreePlot
 
 import numpy as np
 from funtracks.data_model import NodeAttr
+from collections import namedtuple
 
 class TreeWidget(QWidget):
     """pyqtgraph-based widget for lineage tree visualization and navigation"""
@@ -30,24 +31,25 @@ class TreeWidget(QWidget):
         self.view_direction = "vertical"  # options: "horizontal", "vertical"
 
         self.selected_nodes = NodeSelectionList()
+        self.VertexData = namedtuple('VertexData', 'marker, node, time')
 
         # lineages is a list of lists (trees) of lists (tracks)
         def recurse_tree(node, lineage):
             positions = tracks.get_nodes_attr([node], NodeAttr.POS.value, required=True)
-            _lineage = [["square", node, positions[:, 0][0]]]
+            _lineage = [self.VertexData("square", node, positions[:,0][0])]
             succs = tracks.successors(node)
             while len(succs)==1:
                 node = succs[0]
                 positions = tracks.get_nodes_attr([node], NodeAttr.POS.value, required=True)
-                _lineage.append(["circle", node, positions[:, 0][0]])
+                _lineage.append(self.VertexData("circle", node, positions[:,0][0]))
                 succs = tracks.successors(node)
             if len(succs)==0:
-                _lineage[-1][0] = "cross"
+                _lineage[-1] = self.VertexData("cross", *_lineage[-1][1:])
                 lineage.append(_lineage)
                 return lineage
             if len(succs)>1:
                 lineage = recurse_tree(succs[0], lineage)
-                _lineage[-1][0] = "triangle_up"
+                _lineage[-1] = self.VertexData("triangle_up", *_lineage[-1][1:])
                 lineage.append(_lineage)
                 return recurse_tree(succs[1], lineage)
 
