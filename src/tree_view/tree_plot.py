@@ -151,3 +151,4 @@ class TreePlot(QWidget):
 
         self.selected_nodes = []
         self.canvas.request_draw(lambda: self.renderer.render(self.scene, self.camera))
+        self.camera.show_object(self.scene, scale=0.7)
