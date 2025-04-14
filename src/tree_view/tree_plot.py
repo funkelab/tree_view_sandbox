@@ -27,14 +27,31 @@ class TreePlot(QWidget):
         self.canvas = WgpuCanvas()
         self.renderer = gfx.WgpuRenderer(self.canvas)
         self.scene = gfx.Scene()
-        self.camera = gfx.OrthographicCamera(110, 110)
-        self.camera.local.position = (50, 0, 0)
-        controller = gfx.PanZoomController(self.camera, register_events=self.renderer)
+        self.camera = gfx.OrthographicCamera(110, 110, maintain_aspect=False)
+        self.controller_xy = gfx.PanZoomController(register_events=self.renderer)
+        self.controller_xy.add_camera(self.camera)
+        self.controller_x = gfx.PanZoomController(register_events=self.renderer, enabled=False)
+        self.controller_x.add_camera(self.camera, include_state={"x", "width"})
+        self.controller_y = gfx.PanZoomController(register_events=self.renderer, enabled=False)
+        self.controller_y.add_camera(self.camera, include_state={"y", "height"})
 
         self.layout.addWidget(self.canvas)
 
     def set_event_handler(self, f):
         self.canvas.add_event_handler(f, "*")
+
+    def both_xy(self):
+        self.controller_xy.enabled=True
+        self.controller_x.enabled=False
+        self.controller_y.enabled=False
+
+    def only_x(self):
+        self.controller_xy.enabled=False
+        self.controller_x.enabled=True
+
+    def only_y(self):
+        self.controller_xy.enabled=False
+        self.controller_y.enabled=True
 
     def _select_nodes(self, event):
         if 'Shift' not in event.modifiers:

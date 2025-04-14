@@ -123,6 +123,12 @@ class TreeWidget(QWidget):
             self.feature_widget._toggle_feature_mode()
         if arg['event_type'] == 'char' and arg['char_str'] == 'f':
             self._flip_axes()
+        if arg['event_type'] == 'key_down' and arg['key'] == 'x':
+            self.tree_plot.only_x()
+        if arg['event_type'] == 'key_down' and arg['key'] == 'y':
+            self.tree_plot.only_y()
+        if arg['event_type'] == 'key_up':
+            self.tree_plot.both_xy()
 
     def _flip_axes(self):
         """Flip the axes of the plot"""
