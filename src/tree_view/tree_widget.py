@@ -129,6 +129,8 @@ class TreeWidget(QWidget):
             self.view_direction = "vertical"
         else:
             self.view_direction = "horizontal"
+        self.tree_plot.set_view_direction(self.view_direction)
+        self.tree_plot.update()
 
     def _update_selected(self):
         """Called whenever the selection list is updated."""

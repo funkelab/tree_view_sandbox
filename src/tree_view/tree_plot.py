@@ -5,6 +5,7 @@ import pygfx as gfx
 import distinctipy
 import numpy as np
 from collections import namedtuple
+import pylinalg as la
 
 class TreePlot(QWidget):
     """The actual vispy (or pygfx) tree plot"""
@@ -17,8 +18,9 @@ class TreePlot(QWidget):
         self.colors = distinctipy.get_colors(sum([len(x) for x in self.lineages]))
         self.selected_nodes = []
         self.selected_geometry = None
-        self.mode = "all"
-        self.feature = "tree"
+        self.mode = "all"  # options: "all", "lineage"
+        self.feature = "tree"  # options: "tree", "area"
+        self.view_direction = "vertical"  # options: "horizontal", "vertical"
 
         self.NameData = namedtuple('NameData', 'x, node, time, area')
 
@@ -50,6 +52,9 @@ class TreePlot(QWidget):
 
     def set_feature(self, feature):
         self.feature = feature
+
+    def set_view_direction(self, direction):
+        self.view_direction = direction
 
     def update(self):
         self.scene.clear()
@@ -171,5 +176,11 @@ class TreePlot(QWidget):
                 x += 1
 
         self.selected_nodes = []
+
+        if self.view_direction == "horizontal":
+            self.scene.local.rotation = la.quat_from_axis_angle([0., 0., 1.], 3.14159/2)
+        else:
+            self.scene.local.rotation = [0., 0., 0., 1.]
+
         self.canvas.request_draw(lambda: self.renderer.render(self.scene, self.camera))
         self.camera.show_object(self.scene, scale=0.7)
