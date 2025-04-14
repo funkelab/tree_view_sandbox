@@ -33,6 +33,9 @@ class TreePlot(QWidget):
 
         self.layout.addWidget(self.canvas)
 
+    def set_event_handler(self, f):
+        self.canvas.add_event_handler(f, "*")
+
     def _select_nodes(self, event):
         if 'Shift' not in event.modifiers:
             self.selected_nodes = []

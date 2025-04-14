@@ -65,6 +65,7 @@ class TreeWidget(QWidget):
         layout = QVBoxLayout()
 
         self.tree_plot: TreePlot = TreePlot(lineages)
+        self.tree_plot.set_event_handler(self.my_handler)
 
         # Add radiobuttons for switching between different display modes
         self.mode_widget = TreeViewModeWidget()
@@ -115,13 +116,13 @@ class TreeWidget(QWidget):
 
         self.tree_plot.update()
 
-    def toggle_display_mode(self):
-        """Toggle display mode."""
-        self.mode_widget._toggle_display_mode()
-
-    def toggle_feature_mode(self):
-        """Toggle feature mode."""
-        self.feature_widget._toggle_feature_mode()
+    def my_handler(self, arg):
+        if arg['event_type'] == 'char' and arg['char_str'] == 'q':
+            self.mode_widget._toggle_display_mode()
+        if arg['event_type'] == 'char' and arg['char_str'] == 'w':
+            self.feature_widget._toggle_feature_mode()
+        if arg['event_type'] == 'char' and arg['char_str'] == 'f':
+            self._flip_axes()
 
     def _flip_axes(self):
         """Flip the axes of the plot"""
