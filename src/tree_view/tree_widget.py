@@ -129,6 +129,38 @@ class TreeWidget(QWidget):
             self.tree_plot.only_y()
         if arg['event_type'] == 'key_up':
             self.tree_plot.both_xy()
+        if arg['event_type'] == 'key_up' and arg['key'] == 'ArrowLeft':
+            if self.tree_plot.get_view_direction() == "horizontal":
+                self.tree_plot.select_prev_cell()
+            else:
+                if self.tree_plot.get_feature() == "tree":
+                    self.tree_plot.select_prev_lineage()
+                else:
+                    self.tree_plot.select_prev_feature()
+        if arg['event_type'] == 'key_up' and arg['key'] == 'ArrowRight':
+            if self.tree_plot.get_view_direction() == "horizontal":
+                self.tree_plot.select_next_cell()
+            else:
+                if self.tree_plot.get_feature() == "tree":
+                    self.tree_plot.select_next_lineage()
+                else:
+                    self.tree_plot.select_next_feature()
+        if arg['event_type'] == 'key_up' and arg['key'] == 'ArrowUp':
+            if self.tree_plot.get_view_direction() == "vertical":
+                self.tree_plot.select_prev_cell()
+            else:
+                if self.tree_plot.get_feature() == "tree":
+                    self.tree_plot.select_next_lineage()
+                else:
+                    self.tree_plot.select_next_feature()
+        if arg['event_type'] == 'key_up' and arg['key'] == 'ArrowDown':
+            if self.tree_plot.get_view_direction() == "vertical":
+                self.tree_plot.select_next_cell()
+            else:
+                if self.tree_plot.get_feature() == "tree":
+                    self.tree_plot.select_prev_lineage()
+                else:
+                    self.tree_plot.select_prev_feature()
 
     def _flip_axes(self):
         """Flip the axes of the plot"""
