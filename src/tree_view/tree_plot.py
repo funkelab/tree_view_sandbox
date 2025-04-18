@@ -6,6 +6,7 @@ import distinctipy
 import numpy as np
 from collections import namedtuple
 import pylinalg as la
+import copy
 
 class TreePlot(QWidget):
     """The actual vispy (or pygfx) tree plot"""
@@ -37,6 +38,11 @@ class TreePlot(QWidget):
         self.controller_y.add_camera(self.camera, include_state={"y", "height"})
 
         self.layout.addWidget(self.canvas)
+
+        self.canvas.request_draw(self.animate)
+
+    def animate(self):
+        self.renderer.render(self.scene, self.camera)
 
     def set_event_handler(self, f):
         self.canvas.add_event_handler(f, "*")
@@ -308,6 +314,11 @@ class TreePlot(QWidget):
     def get_view_direction(self):
         return self.view_direction
 
+    def reset_fov(self):
+        self.controller_xy.enabled=False
+        self.camera.set_state(self.camera_state0)
+        self.controller_xy.enabled=True
+
     def update(self):
         self.scene.clear()
 
@@ -439,5 +450,7 @@ class TreePlot(QWidget):
         else:
             self.scene.local.rotation = [0., 0., 0., 1.]
 
-        self.canvas.request_draw(lambda: self.renderer.render(self.scene, self.camera))
-        self.camera.show_object(self.scene, scale=0.7)
+        self.camera.show_object(self.scene)
+        self.camera_state0 = copy.deepcopy(self.camera.get_state())
+        self.canvas.update()
+
