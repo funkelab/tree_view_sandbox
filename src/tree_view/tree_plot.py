@@ -314,12 +314,19 @@ class TreePlot(QWidget):
     def get_view_direction(self):
         return self.view_direction
 
+    def actuate_view_direction(self):
+        if self.view_direction == "horizontal":
+            self.scene.local.rotation = la.quat_from_axis_angle([0., 0., 1.], 3.14159/2)
+        else:
+            self.scene.local.rotation = [0., 0., 0., 1.]
+        self.canvas.update()
+
     def reset_fov(self):
         self.controller_xy.enabled=False
         self.camera.set_state(self.camera_state0)
         self.controller_xy.enabled=True
 
-    def update(self):
+    def init(self):
         self.scene.clear()
 
         # selected markers
@@ -445,10 +452,7 @@ class TreePlot(QWidget):
 
         self.selected_nodes = []
 
-        if self.view_direction == "horizontal":
-            self.scene.local.rotation = la.quat_from_axis_angle([0., 0., 1.], 3.14159/2)
-        else:
-            self.scene.local.rotation = [0., 0., 0., 1.]
+        self.actuate_view_direction()
 
         self.camera.show_object(self.scene)
         self.camera_state0 = copy.deepcopy(self.camera.get_state())

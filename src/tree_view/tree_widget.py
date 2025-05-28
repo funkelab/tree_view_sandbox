@@ -114,7 +114,7 @@ class TreeWidget(QWidget):
         self.setLayout(layout)
         self.refresh(self.tracks)
 
-        self.tree_plot.update()
+        self.tree_plot.init()
 
     def my_handler(self, arg):
         if arg['event_type'] == 'char' and arg['char_str'] == 'q':
@@ -171,7 +171,7 @@ class TreeWidget(QWidget):
         else:
             self.view_direction = "horizontal"
         self.tree_plot.set_view_direction(self.view_direction)
-        self.tree_plot.update()
+        self.tree_plot.actuate_view_direction()
 
     def _update_selected(self):
         """Called whenever the selection list is updated."""
@@ -190,7 +190,7 @@ class TreeWidget(QWidget):
 
         """
         self.tree_plot.set_mode(mode)
-        self.tree_plot.update()
+        self.tree_plot.init()
 
     def _set_feature(self, feature: str) -> None:
         """Set the feature mode to 'tree' or 'area'. For this the view is always
@@ -203,7 +203,7 @@ class TreeWidget(QWidget):
         if feature not in ["tree", "area"]:
             raise ValueError(f"Feature must be 'tree' or 'area', got {feature}")
         self.tree_plot.set_feature(feature)
-        self.tree_plot.update()
+        self.tree_plot.init()
 
     def _update_lineage_df(self) -> None:
         """Subset dataframe to include only nodes belonging to the current lineage"""
