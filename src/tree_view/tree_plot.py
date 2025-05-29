@@ -77,13 +77,14 @@ class TreePlot(QWidget):
         self.draw_selected_nodes()
 
     def draw_selected_nodes(self):
-        for i,(nd,vi) in enumerate(self.selected_nodes):
-            self.selected_geometry.colors.data[i] = [0.68,0.85,0.90,1]  # light blue
-            self.selected_geometry.colors.update_range(i)
-            self.selected_geometry.positions.data[i,0] = nd.x*10 if self.feature == "tree" else nd.area[vi+nd.offset]
-            self.selected_geometry.positions.data[i,1] = nd.time[vi+nd.offset]
-            self.selected_geometry.positions.update_range(i)
-        for i in range(len(self.selected_nodes),100):
+        if self.mode=="all":
+            for i,(nd,vi) in enumerate(self.selected_nodes):
+                self.selected_geometry.colors.data[i] = [0.68,0.85,0.90,1]  # light blue
+                self.selected_geometry.colors.update_range(i)
+                self.selected_geometry.positions.data[i,0] = nd.x*10 if self.feature == "tree" else nd.area[vi+nd.offset]
+                self.selected_geometry.positions.data[i,1] = nd.time[vi+nd.offset]
+                self.selected_geometry.positions.update_range(i)
+        for i in range(len(self.selected_nodes) if self.mode=="all" else 0, 100):
             self.selected_geometry.colors.data[i] = [0,0,0,0]
             self.selected_geometry.colors.update_range(i)
             self.selected_geometry.positions.data[i,:] = 0
