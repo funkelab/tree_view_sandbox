@@ -190,7 +190,7 @@ class TreeWidget(QWidget):
 
         """
         self.tree_plot.set_mode(mode)
-        self.tree_plot.init()
+        self.tree_plot.update()
 
     def _set_feature(self, feature: str) -> None:
         """Set the feature mode to 'tree' or 'area'. For this the view is always
@@ -203,7 +203,7 @@ class TreeWidget(QWidget):
         if feature not in ["tree", "area"]:
             raise ValueError(f"Feature must be 'tree' or 'area', got {feature}")
         self.tree_plot.set_feature(feature)
-        self.tree_plot.init()
+        self.tree_plot.update()
 
     def _update_lineage_df(self) -> None:
         """Subset dataframe to include only nodes belonging to the current lineage"""

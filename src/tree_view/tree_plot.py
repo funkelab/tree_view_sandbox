@@ -16,10 +16,15 @@ class TreePlot(QWidget):
         self.layout = QVBoxLayout(self)
         self.lineages = lineages
 
-        self.colors = distinctipy.get_colors(sum([len(x) for x in self.lineages]))
+        self.colors = [(*x, 1) for x in distinctipy.get_colors(sum([len(x) for x in self.lineages]))]
         self.selected_nodes = []
         self.selected_lineages = []
         self.selected_geometry = None
+        self.start_geometries = None
+        self.middle_geometries = None
+        self.end_geometries = None
+        self.vertical_geometries = None
+        self.diagonal_geometries = None
         self.mode = "all"  # options: "all", "lineage"
         self.feature = "tree"  # options: "tree", "area"
         self.view_direction = "vertical"  # options: "horizontal", "vertical"
@@ -68,12 +73,16 @@ class TreePlot(QWidget):
         self.draw_selected_nodes()
 
     def draw_selected_nodes(self):
-        self.selected_geometry.positions.data[:,:] = 0
         for i,(nd,vi) in enumerate(self.selected_nodes):
             self.selected_geometry.colors.data[i] = [0.68,0.85,0.90,1]  # light blue
             self.selected_geometry.colors.update_range(i)
             self.selected_geometry.positions.data[i,0] = nd.x*10 if self.feature == "tree" else nd.area[vi+nd.offset]
             self.selected_geometry.positions.data[i,1] = nd.time[vi+nd.offset]
+            self.selected_geometry.positions.update_range(i)
+        for i in range(len(self.selected_nodes),100):
+            self.selected_geometry.colors.data[i] = [0,0,0,0]
+            self.selected_geometry.colors.update_range(i)
+            self.selected_geometry.positions.data[i,:] = 0
             self.selected_geometry.positions.update_range(i)
         self.canvas.request_draw()
 
@@ -344,33 +353,27 @@ class TreePlot(QWidget):
         )
         self.scene.add(points)
 
+        self.start_geometries = []
+        self.middle_geometries = []
+        self.end_geometries = []
+        self.vertical_geometries = []
+        self.diagonal_geometries = []
+
         x = 0
         iselected_tree = 0
-        self.selected_lineages = []
         for itree in range(len(self.lineages)):
-            # skip if not selected
-            if self.mode=="lineage":
-                skip=True
-                for itrack in range(len(self.lineages[itree])):
-                    for selected in self.selected_nodes:
-                        if selected[0].node == self.lineages[itree][itrack][0].node:
-                            skip=False
-                            break
-                        if not skip: break
-                if skip: continue
-            self.selected_lineages.append(self.lineages[itree])
-
             for itrack in range(len(self.lineages[itree])):
                 track = self.lineages[itree][itrack]
                 time, area =  [-t.time for t in track], [t.area for t in track],
 
                 # start markers
+                self.start_geometries.append(gfx.Geometry(positions=[(0, 0, 0)],
+                                                          edge_colors=[self.colors[x]]))
                 points = gfx.Points(
-                    gfx.Geometry(positions=[(x*10 if self.feature == "tree" else track[i].area,
-                                             -track[i].time,
-                                             0) for i in (0,)]),
+                    self.start_geometries[-1],
                     gfx.PointsMarkerMaterial(marker=track[0].marker,
-                                             edge_color=self.colors[x],
+                                             color="black",
+                                             edge_color_mode="vertex",
                                              edge_width=4,
                                              pick_write=True),
                     name=self.NameData(x, track[0].node, 0, time, area, iselected_tree, itrack),
@@ -383,12 +386,14 @@ class TreePlot(QWidget):
 
                 # middle markers
                 if len(track)>2:
+                    self.middle_geometries.append(gfx.Geometry(
+                            positions=[(0, 0, 0) for _ in track[1:-1]],
+                            edge_colors=[self.colors[x] for _ in track[1:-1]]))
                     points = gfx.Points(
-                        gfx.Geometry(positions=[(x*10 if self.feature == "tree" else t.area,
-                                                 -t.time,
-                                                 0) for t in track[1:-1]]),
+                        self.middle_geometries[-1],
                         gfx.PointsMarkerMaterial(marker=track[1].marker,
-                                                 edge_color=self.colors[x],
+                                                 color="black",
+                                                 edge_color_mode="vertex",
                                                  edge_width=4,
                                                  pick_write=True),
                         name=self.NameData(x, track[0].node, 1, time, area, iselected_tree, itrack),
@@ -397,15 +402,18 @@ class TreePlot(QWidget):
 
                     @points.add_event_handler("pointer_down")
                     def select_nodes(event):  self._select_nodes(event)
+                else:
+                    self.middle_geometries.append(None)
 
                 # end markers
+                self.end_geometries.append(gfx.Geometry(positions=[(0, 0, 0)],
+                                                        edge_colors=[self.colors[x]]))
                 points = gfx.Points(
-                    gfx.Geometry(positions=[(x*10 if self.feature == "tree" else track[i].area,
-                                             -track[i].time,
-                                             0) for i in (-1,)]),
+                    self.end_geometries[-1],
                     gfx.PointsMarkerMaterial(marker=track[-1].marker,
-                                             edge_color=self.colors[x],
                                              edge_width=4,
+                                             color="black",
+                                             edge_color_mode="vertex",
                                              pick_write=True),
                     name=self.NameData(x, track[0].node, len(time)-1, time, area, iselected_tree, itrack),
                 )
@@ -415,14 +423,111 @@ class TreePlot(QWidget):
                 def select_nodes(event):  self._select_nodes(event)
 
                 # vertical track lines
+                self.vertical_geometries.append(gfx.Geometry(positions=[(0, 0, 0) for _ in track]))
                 line = gfx.Line(
-                    gfx.Geometry(positions=[[x*10 if self.feature == "tree" else t.area,
-                                             -t.time,
-                                             0.0] for t in track]),
+                    self.vertical_geometries[-1],
                     gfx.LineMaterial(thickness=4.0, color=self.colors[x]),
                     render_order=4,
                 )
                 self.scene.add(line)
+
+                # diagonal division lines
+                if track[-1].marker=="triangle_up":
+                    self.diagonal_geometries.append(
+                        gfx.Geometry(positions=[[0, 0, 0] for _ in range(3)],
+                                     colors=[(1,1,1,1) for _ in range(3)]))
+                    line = gfx.Line(
+                        self.diagonal_geometries[-1],
+                        gfx.LineMaterial(thickness=2.0, color_mode="vertex"),
+                    )
+                    self.scene.add(line)
+                else:
+                    self.diagonal_geometries.append(None)
+
+                x += 1
+            iselected_tree += 1
+
+        self.update()
+
+    def update(self):
+        x = idisplayed = 0
+        for itree in range(len(self.lineages)):
+
+            # skip if not selected
+            skip=False
+            if self.mode=="lineage":
+                skip=True
+                for itrack in range(len(self.lineages[itree])):
+                    for selected in self.selected_nodes:
+                        if selected[0].node == self.lineages[itree][itrack][0].node:
+                            skip=False
+                            break
+                        if not skip: break
+            if not skip:
+                self.selected_lineages.append(self.lineages[itree])
+
+            for itrack in range(len(self.lineages[itree])):
+                track = self.lineages[itree][itrack]
+                time, area =  [-t.time for t in track], [t.area for t in track],
+
+                # start markers
+                if not skip:
+                    self.start_geometries[x].edge_colors.data[0,3] = 1
+                    self.start_geometries[x].edge_colors.update_range(0)
+                    self.start_geometries[x].positions.data[0,0] = \
+                            idisplayed*10 if self.feature == "tree" else track[0].area
+                    self.start_geometries[x].positions.data[0,1] = -track[0].time
+                else:
+                    self.start_geometries[x].edge_colors.data[0,3] = 0
+                    self.start_geometries[x].edge_colors.update_range(0)
+                    self.start_geometries[x].positions.data[0,0] = 0
+                    self.start_geometries[x].positions.data[0,1] = 0
+                self.start_geometries[x].positions.data[0,2] = 0
+                self.start_geometries[x].positions.update_range(0)
+
+                # middle markers
+                if len(track)>2:
+                    for i,t in enumerate(track[1:-1]):
+                        if not skip:
+                            self.middle_geometries[x].edge_colors.data[i,3] = 1
+                            self.middle_geometries[x].edge_colors.update_range(i)
+                            self.middle_geometries[x].positions.data[i,0] = \
+                                idisplayed*10 if self.feature == "tree" else t.area
+                            self.middle_geometries[x].positions.data[i,1] = -t.time
+                        else:
+                            self.middle_geometries[x].edge_colors.data[i,3] = 0
+                            self.middle_geometries[x].edge_colors.update_range(i)
+                            self.middle_geometries[x].positions.data[i,0] = 0
+                            self.middle_geometries[x].positions.data[i,1] = 0
+                        self.middle_geometries[x].positions.data[i,2] = 0
+                        self.middle_geometries[x].positions.update_range(i)
+
+                # end markers
+                if not skip:
+                    self.end_geometries[x].edge_colors.data[0,3] = 1
+                    self.end_geometries[x].edge_colors.update_range(0)
+                    self.end_geometries[x].positions.data[0,0] = \
+                            idisplayed*10 if self.feature == "tree" else track[-1].area
+                    self.end_geometries[x].positions.data[0,1] = -track[-1].time
+                else:
+                    self.end_geometries[x].edge_colors.data[0,3] = 0
+                    self.end_geometries[x].edge_colors.update_range(0)
+                    self.end_geometries[x].positions.data[0,0] = 0
+                    self.end_geometries[x].positions.data[0,1] = 0
+                self.end_geometries[x].positions.data[0,2] = 0
+                self.end_geometries[x].positions.update_range(0)
+
+                # vertical track lines
+                for i,t in enumerate(track):
+                    if not skip:
+                        self.vertical_geometries[x].positions.data[i,0] = \
+                                idisplayed*10 if self.feature == "tree" else t.area
+                        self.vertical_geometries[x].positions.data[i,1] = -t.time
+                    else:
+                        self.vertical_geometries[x].positions.data[i,0] = 0
+                        self.vertical_geometries[x].positions.data[i,1] = 0
+                    self.vertical_geometries[x].positions.data[i,2] = 0
+                    self.vertical_geometries[x].positions.update_range(i)
 
                 # diagonal division lines
                 if track[-1].marker=="triangle_up":
@@ -432,25 +537,37 @@ class TreePlot(QWidget):
                     inext = itrack+1
                     while self.lineages[itree][inext][0].time-1 != track[-1].time:
                         inext += 1
-                    positions = [[(x-(itrack-iprev))*10 if self.feature == "tree" else self.lineages[itree][iprev][0].area,
-                                   -self.lineages[itree][iprev][0].time,
-                                   0.0],
-                                 [x*10 if self.feature == "tree" else track[-1].area,
-                                  -track[-1].time,
-                                  0.0],
-                                 [(x-(itrack-inext))*10 if self.feature == "tree" else self.lineages[itree][inext][0].area,
-                                  -self.lineages[itree][inext][0].time,
-                                  0.0]]
-                    line = gfx.Line(
-                        gfx.Geometry(positions=positions),
-                        gfx.LineMaterial(thickness=2.0, color="white"),
-                    )
-                    self.scene.add(line)
+                    if not skip:
+                        for i in range(3):
+                            self.diagonal_geometries[x].colors.data[i,3] = 1
+                            self.diagonal_geometries[x].colors.update_range(i)
+                        self.diagonal_geometries[x].positions.data[0,0] = \
+                                (idisplayed-(itrack-iprev))*10 if self.feature == "tree" else self.lineages[itree][iprev][0].area
+                        self.diagonal_geometries[x].positions.data[0,1] = \
+                                 -self.lineages[itree][iprev][0].time
+                        self.diagonal_geometries[x].positions.data[1,0] = \
+                                 idisplayed*10 if self.feature == "tree" else track[-1].area
+                        self.diagonal_geometries[x].positions.data[1,1] = \
+                                  -track[-1].time
+                        self.diagonal_geometries[x].positions.data[2,0] = \
+                                 (idisplayed-(itrack-inext))*10 if self.feature == "tree" else self.lineages[itree][inext][0].area
+                        self.diagonal_geometries[x].positions.data[2,1] = \
+                                  -self.lineages[itree][inext][0].time
+                    else:
+                        for i in range(3):
+                            self.diagonal_geometries[x].colors.data[i,3] = 0
+                            self.diagonal_geometries[x].colors.update_range(i)
+                            self.diagonal_geometries[x].positions.data[i,0] = 0
+                            self.diagonal_geometries[x].positions.data[i,1] = 0
+                    for i in range(3):
+                        self.diagonal_geometries[x].positions.data[i,2] = 0
+                        self.diagonal_geometries[x].positions.update_range(i)
 
                 x += 1
-            iselected_tree += 1
+                if not skip: idisplayed += 1
 
         self.selected_nodes = []
+        self.draw_selected_nodes()
 
         self.actuate_view_direction()
 
