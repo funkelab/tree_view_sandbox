@@ -67,10 +67,13 @@ class TreePlot(QWidget):
 
     def _select_nodes(self, event):
         if self.mode!="all":  return
-        if 'Shift' not in event.modifiers:
-            self.selected_nodes = []
-        self.selected_nodes.append(
-                (event.pick_info["world_object"].name, event.pick_info["vertex_index"]))
+        info = (event.pick_info["world_object"].name, event.pick_info["vertex_index"])
+        if info in self.selected_nodes:
+            self.selected_nodes.remove(info)
+        else:
+            if 'Shift' not in event.modifiers:
+                self.selected_nodes = []
+            self.selected_nodes.append(info)
         self.draw_selected_nodes()
 
     def draw_selected_nodes(self):
