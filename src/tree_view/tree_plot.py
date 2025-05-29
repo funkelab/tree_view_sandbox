@@ -566,7 +566,6 @@ class TreePlot(QWidget):
                 ilineage += 1
                 if not skip: idisplayed += 1
 
-        self.selected_nodes = []
         self.draw_selected_nodes()
 
         self.actuate_view_direction()
