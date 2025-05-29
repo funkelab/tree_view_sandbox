@@ -17,14 +17,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Image Processing",
 ]
 
-dependencies =[
-    "funtracks",
-    "PyQt5>=5.13.2,!=5.15.0",
-    "numpy",
-    "vispy",
-    "qtpy",
-    "pandas",
-    "superqt",
+dependencies =[ "numpy", "funtracks>=1.0.2,<2", "pyqt5>=5.15.11,<6", "vispy>=0.15.2,<0.16", "qtpy>=2.4.3,<3", "pandas>=2.2.3,<3", "superqt>=0.7.3,<0.8",
 ]
 
 [project.optional-dependencies]
@@ -93,5 +86,5 @@ testing = { features = ["testing"], solve-group = "default" }
 [tool.pixi.tasks]
 
 [tool.pixi.dependencies]
-pygfx = ">=0.9.0,<0.10"
+pygfx = ">=0.10.0,<0.11"
 distinctipy = ">=1.3.4,<2"
