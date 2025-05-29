@@ -328,6 +328,8 @@ class TreePlot(QWidget):
             self.scene.local.rotation = la.quat_from_axis_angle([0., 0., 1.], 3.14159/2)
         else:
             self.scene.local.rotation = [0., 0., 0., 1.]
+        self.camera.show_object(self.scene)
+        self.camera_state0 = copy.deepcopy(self.camera.get_state())
         self.canvas.update()
 
     def reset_fov(self):
@@ -564,8 +566,4 @@ class TreePlot(QWidget):
         self.draw_selected_nodes()
 
         self.actuate_view_direction()
-
-        self.camera.show_object(self.scene)
-        self.camera_state0 = copy.deepcopy(self.camera.get_state())
-        self.canvas.update()
 
