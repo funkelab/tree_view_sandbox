@@ -132,6 +132,7 @@ class TreeWidget(QWidget):
         if arg['event_type'] == 'pointer_up' and arg['button'] == 2:
             self.tree_plot.reset_fov()
         if arg['event_type'] == 'key_up' and arg['key'] == 'ArrowLeft':
+            if self.tree_plot.mode!="all":  return
             if self.tree_plot.get_view_direction() == "horizontal":
                 self.tree_plot.select_prev_cell()
             else:
@@ -140,6 +141,7 @@ class TreeWidget(QWidget):
                 else:
                     self.tree_plot.select_prev_feature()
         if arg['event_type'] == 'key_up' and arg['key'] == 'ArrowRight':
+            if self.tree_plot.mode!="all":  return
             if self.tree_plot.get_view_direction() == "horizontal":
                 self.tree_plot.select_next_cell()
             else:
@@ -148,6 +150,7 @@ class TreeWidget(QWidget):
                 else:
                     self.tree_plot.select_next_feature()
         if arg['event_type'] == 'key_up' and arg['key'] == 'ArrowUp':
+            if self.tree_plot.mode!="all":  return
             if self.tree_plot.get_view_direction() == "vertical":
                 self.tree_plot.select_prev_cell()
             else:
@@ -156,6 +159,7 @@ class TreeWidget(QWidget):
                 else:
                     self.tree_plot.select_next_feature()
         if arg['event_type'] == 'key_up' and arg['key'] == 'ArrowDown':
+            if self.tree_plot.mode!="all":  return
             if self.tree_plot.get_view_direction() == "vertical":
                 self.tree_plot.select_next_cell()
             else:

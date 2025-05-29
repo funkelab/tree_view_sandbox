@@ -66,6 +66,7 @@ class TreePlot(QWidget):
         self.controller_y.enabled=True
 
     def _select_nodes(self, event):
+        if self.mode!="all":  return
         if 'Shift' not in event.modifiers:
             self.selected_nodes = []
         self.selected_nodes.append(
